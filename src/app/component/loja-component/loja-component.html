@@ -1,0 +1,26 @@
+<h2 class="mb-3">Lojas</h2>
+
+<div class="row g-2 align-items-center mb-3">
+  <div class="col-sm-6 col-md-4">
+    <input class="form-control"
+           [(ngModel)]="novoNome"
+           placeholder="Nome da loja">
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-primary" (click)="adicionar()">Adicionar</button>
+  </div>
+</div>
+
+<ul class="list-group mb-3">
+  @for (l of lojas; track l.id) {
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>{{l.id}} - {{l.nome}}</span>
+      <button class="btn btn-sm btn-outline-danger"
+              (click)="remover(l.id)">Remover</button>
+    </li>
+  }
+</ul>
+
+@if (lojas.length === 0) {
+  <div class="alert alert-info">Nenhuma loja cadastrada</div>
+}
