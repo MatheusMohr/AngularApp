@@ -1,31 +1,34 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ProdutoModel } from '../models/produtoModel';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { catchError, Observable, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProdutoService {
+  private http = inject(HttpClient);
+  private baseApiUrl = 'http://localhost:8080/produtos';
+  private produtos: ProdutoModel[] = [];
 
-  private produtos: ProdutoModel[] = [
-    {id: 1, nome: 'Martelo'},
-    {id:2, nome: 'Prego'},
-    {id: 3, nome:'Makita'},
-  ];
-  private nextId = 4;
-
-  listar(): ProdutoModel[]{
-    return [...this.produtos]
+  listar(): Observable<ProdutoModel[]>{
+    return this.http.get<ProdutoModel[]>(`${this.baseApiUrl}/listar`).pipe(catchError(this.handle));
   }
 
-  adicionar(nome: string): ProdutoModel{
-    const novo: ProdutoModel = {id: this.nextId++, nome};
-    this.produtos.push(novo);
-    return novo;
+  adicionar(produto: ProdutoModel): Observable<ProdutoModel> {
+    return this.http.post<ProdutoModel>(`${this.baseApiUrl}/salvar`, produto).pipe(catchError(this.handle));
   }
 
-  remover(id: number): void{
-    this.produtos = this.produtos.filter(p => p.id !== id);
+  remover(id: string): Observable<string> {
+    return this.http.post<string>(`${this.baseApiUrl}/deletar/${id}`, {}).pipe(catchError(this.handle));
   }
 
+  editar(id: string, produto: ProdutoModel): Observable<ProdutoModel> {
+    return this.http.post<ProdutoModel>(`${this.baseApiUrl}/editar/${id}`, produto).pipe(catchError(this.handle));
+  }
 
+  private handle(err: HttpErrorResponse){
+    const msg = err.error?.message || err.error?.erro || err.message || 'Erro inesperado';
+    return throwError(() => new Error(msg));
+  }
 }
