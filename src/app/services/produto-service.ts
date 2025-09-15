@@ -20,9 +20,9 @@ export class ProdutoService {
   }
 
   remover(id: string): Observable<string> {
-    return this.http.post<string>(`${this.baseApiUrl}/deletar/${id}`, {}).pipe(catchError(this.handle));
+    return this.http.delete(`${this.baseApiUrl}/apagar/${id}`, { responseType: 'text' }) .pipe(catchError(this.handle));
   }
-
+  
   editar(id: string, produto: ProdutoModel): Observable<ProdutoModel> {
     return this.http.post<ProdutoModel>(`${this.baseApiUrl}/editar/${id}`, produto).pipe(catchError(this.handle));
   }

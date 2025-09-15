@@ -2,6 +2,7 @@
 
 @if (loading) {<div class="alert alert-info">Carregando</div>}
 @if (erro) {<div class="alert alert-danger">{{erro}}</div>}
+@if (sucesso) {<div class="alert alert-sucess">{{sucesso}}</div>}
 
 <div class="row g-2 align-items-center mb-3">
     <div class="col-sm-6 col-md-4">
@@ -9,8 +10,18 @@
                       [(ngModel)]="novoNome"
                       placeholder="Nome do produto" >
     </div>
+        <div class="col-sm-6 col-md-4" type="number">
+        <input class="form-control"
+                      [(ngModel)]="novoPreco"
+                      placeholder="Preço" >
+    </div>
+        <div class="col-sm-6 col-md-4">
+        <input class="form-control"
+                      [(ngModel)]="novoDescricao"
+                      placeholder="Descrição" >
+    </div>
     <div class="col-auto">
-        <!-- <button class="btn btn-primary" (click)="adicionar()">Adicionar</button>-->
+        <button class="btn btn-primary" (click)="adicionar()">Adicionar</button>
     </div>
 </div>
 
@@ -22,9 +33,8 @@
         <small>{{ p.descricao }}</small>
       </div>
       <span class="badge bg-success rounded-pill me-3">R$ {{ p.preco.toFixed(2) }}</span>
-      <div class="d-flex gap-1">
-        <!--<button class="btn btn-sm btn-outline-primary" (click)="editar(p)">Editar</button> -->
-        <!-- <button class="btn btn-sm btn-outline-danger" (click)="remover(p.id)">Remover</button> -->
+      <div class="col-auto">
+          <button class="btn btn-primary" (click)="remover()">Remover</button>
       </div>
     </li>
   }
