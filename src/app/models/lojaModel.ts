@@ -1,6 +1,9 @@
+import { ProdutoModel } from "./produtoModel";
+
 export interface LojaModel {
-  id: number;
+  id?: string;
   nome: string;
+  endereco?: string;
   cnpj?: string;
-  descricao?: string; 
+  produtos?: ProdutoModel[];
 }

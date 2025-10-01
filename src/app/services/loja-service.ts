@@ -1,30 +1,36 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { catchError, Observable, throwError } from 'rxjs';
 import { LojaModel } from '../models/lojaModel';
-
-@Injectable({
-  providedIn: 'root'
-})
+  
+@Injectable({ providedIn: 'root' })
 export class LojaService {
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:8080/loja';
 
-  private lojas: LojaModel[] = [
-    { id: 1, nome: 'Loja do Zé' },
-    { id: 2, nome: 'Casa das Ferramentas' },
-    { id: 3, nome: 'Super Construção' }
-  ];
-
-  private nextId = 4;
-
-  listar(): LojaModel[] {
-    return [...this.lojas];
+  listar(): Observable<LojaModel[]> {
+    return this.http.get<LojaModel[]>(`${this.apiUrl}/listar`).pipe(catchError(this.handleError));
   }
 
-  adicionar(nome: string): LojaModel {
-    const nova: LojaModel = { id: this.nextId++, nome };
-    this.lojas.push(nova);
-    return nova;
+  buscarPorId(id: string): Observable<LojaModel> {
+    // ATENÇÃO: Este método requer um endpoint no seu LojaController, como @GetMapping("/{id}")
+    return this.http.get<LojaModel>(`${this.apiUrl}/${id}`).pipe(catchError(this.handleError));
   }
 
-  remover(id: number): void {
-    this.lojas = this.lojas.filter(l => l.id !== id);
+  adicionar(loja: LojaModel): Observable<LojaModel> {
+    return this.http.post<LojaModel>(`${this.apiUrl}/salvar`, loja).pipe(catchError(this.handleError));
+  }
+
+  editar(id: string, loja: LojaModel): Observable<LojaModel> {
+    return this.http.post<LojaModel>(`${this.apiUrl}/editar/${id}`, loja).pipe(catchError(this.handleError));
+  }
+
+  remover(id: string): Observable<string> {
+    return this.http.post(`${this.apiUrl}/apagar/${id}`, null, { responseType: 'text' }).pipe(catchError(this.handleError));
+  }
+
+  private handleError(err: HttpErrorResponse) {
+    const msg = err.error?.message || err.error || err.message || 'Erro inesperado';
+    return throwError(() => new Error(msg));
   }
 }

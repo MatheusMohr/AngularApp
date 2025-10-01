@@ -1,143 +1,137 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { ProdutoService } from '../../services/produto-service';
-import { ProdutoModel } from '../../models/produtoModel';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+import { ProdutoService } from '../../services/produto-service';
+import { LojaService } from '../../services/loja-service';
+
+import { ProdutoModel } from '../../models/produtoModel';
+import { LojaModel } from '../../models/lojaModel';
 
 @Component({
   selector: 'app-produto-component',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './produto-component.html',
-  styleUrls: ['./produto-component.css']
+  styleUrl: './produto-component.css'
 })
 export class ProdutoComponent implements OnInit {
 
-  private service = inject(ProdutoService);
+  private produtoService = inject(ProdutoService);
+  private lojaService = inject(LojaService);
 
   produtos: ProdutoModel[] = [];
+  lojas: LojaModel[] = [];
+
   novoNome = '';
-  novoPreco = '';
+  novoPreco: number | null = null;
   novoDescricao = '';
+  novaLojaId: string = ''; // CORRIGIDO: Tipo alterado para string
+
+  editarItem: ProdutoModel | null = null;
+  
   erro = '';
   sucesso = '';
   loading = false;
-  produtoEmEdicao = '';
 
-  ngOnInit() {
-    this.listar();
+  ngOnInit(){
+    this.carregarProdutos();
+    this.carregarLojas();
   }
 
-  listar() {
+  carregarProdutos(){
     this.loading = true;
-    this.service.listar().subscribe({
-      next: p => { this.produtos = p; this.loading = false; },
-      error: e => { this.erro = e.message; this.loading = false; }
+    this.produtoService.listar().subscribe({
+      next: (data: ProdutoModel[]) => {
+        this.produtos = data;
+        this.loading = false;
+      },
+      error: (e: Error) => this.tratarErro(e, 'Falha ao carregar produtos.')
+    });
+  }
+  
+  carregarLojas(){
+    this.lojaService.listar().subscribe({
+      next: (data: LojaModel[]) => this.lojas = data,
+      error: (e: Error) => this.tratarErro(e, `Falha ao carregar empresas: ${e.message}`)
     });
   }
 
-  adicionar() {
+  adicionar(){
     this.erro = '';
-    const precoNum = Number(this.novoPreco);
-
-    if (!this.novoNome.trim()) { this.erro = 'Informe um nome'; return; }
-    if (!this.novoDescricao.trim()) { this.erro = 'Informe uma descrição'; return; }
-    if (isNaN(precoNum) || precoNum < 0) { this.erro = 'Informe um preço válido'; return; }
-
+    if (!this.novoNome.trim()) { this.erro = 'Informe o nome'; return; }
+    if (!this.novaLojaId) { this.erro = 'Selecione uma empresa'; return; }
+    if (!this.novoPreco || this.novoPreco <= 0) { this.erro = 'Preço inválido'; return; }
+    
     const payload: ProdutoModel = {
-      id: '',
       nome: this.novoNome,
       descricao: this.novoDescricao,
-      preco: precoNum
+      preco: this.novoPreco,
+      lojaId: this.novaLojaId
     };
 
     this.loading = true;
-    this.service.adicionar(payload).subscribe({
-      next: p => {
-        this.sucesso = `Produto ${p.nome} salvo com sucesso!`;
-        this.resetForm();
+    this.produtoService.adicionar(payload).subscribe({
+      next: (p: ProdutoModel) => {
+        this.mostrarSucesso(`Produto ${p.nome} salvo com sucesso`);
+        this.resetarFormulario();
+        this.carregarProdutos();
       },
-      error: e => { this.erro = e.message || 'Falha ao salvar o produto.'; this.loading = false; }
+      error: (e: Error) => this.tratarErro(e, 'Falha ao salvar o produto.')
     });
   }
-
-  editar(produto: ProdutoModel) {
-    this.erro = '';
-    const precoNum = Number(this.novoPreco);
-
-    if (!this.novoNome.trim()) { this.erro = 'Informe um nome'; return; }
-    if (!this.novoDescricao.trim()) { this.erro = 'Informe uma descrição'; return; }
-    if (isNaN(precoNum) || precoNum < 0) { this.erro = 'Informe um preço válido'; return; }
-
-    const payload: ProdutoModel = {
-      id: produto.id,
-      nome: this.novoNome,
-      descricao: this.novoDescricao,
-      preco: precoNum
-    };
-
-    this.loading = true;
-    this.service.editar(produto.id, payload).subscribe({
-      next: p => {
-        this.sucesso = `Produto ${p.nome} atualizado com sucesso!`;
-        this.resetForm();
-      },
-      error: e => { this.erro = e.message || 'Falha ao atualizar o produto'; this.loading = false; }
-    });
-  }
-
-  remover(id: string) {
+  
+  remover(id: string){
     if (!confirm('Deseja realmente remover este produto?')) return;
 
-    this.loading = true;
-    this.service.remover(id).subscribe({
+    this.produtoService.remover(id).subscribe({
       next: () => {
-        this.produtos = this.produtos.filter(p => p.id !== id);
-        this.sucesso = 'Produto removido com sucesso';
-        this.loading = false;
-        setTimeout(() => this.sucesso = '', 3000);
+        this.mostrarSucesso("Produto removido com sucesso.");
+        this.carregarProdutos();
       },
-      error: e => { this.erro = e.message || 'Erro ao remover produto'; this.loading = false; }
+      error: (e: Error) => this.tratarErro(e, 'Falha ao remover o produto.')
     });
   }
 
-salvarEdicao(produto: ProdutoModel) {
-  const precoNum = Number(this.novoPreco);
-  if (!this.novoNome.trim()) { this.erro = 'Informe um nome'; return; }
-  if (!this.novoDescricao.trim()) { this.erro = 'Informe uma descrição'; return; }
-  if (isNaN(precoNum) || precoNum < 0) { this.erro = 'Informe um preço válido'; return; }
-
-  const payload: ProdutoModel = {
-    id: produto.id, 
-    nome: this.novoNome, 
-    descricao: this.novoDescricao, 
-    preco: precoNum
-  };
-
-  this.loading = true;
-  this.service.editar(produto.id, payload).subscribe({
-    next: (p) => {
-      this.sucesso = `Produto ${p.nome} atualizado com sucesso!`;
-      this.loading = false;
-
-      this.novoNome = '';
-      this.novoDescricao = '';
-      this.novoPreco = '';
-
-      this.listar();
-      setTimeout(() => this.sucesso = '', 3000);
-    },
-    error: (e) => {
-      this.erro = e.message || 'Falha ao atualizar o produto';
-      this.loading = false;
+  abrirModalEdicao(produto: ProdutoModel){
+    this.editarItem = { ...produto };
+    if (produto.lojaModel && produto.lojaModel.id) {
+      // Agora os tipos são compatíveis: string = string
+      this.editarItem.lojaId = produto.lojaModel.id;
     }
-  });
-}
+  }
 
-  resetForm() {
+  salvarEdicao(){
+    if (!this.editarItem || !this.editarItem.id || !this.editarItem.lojaId) {
+      this.erro = "Dados inválidos para edição.";
+      return;
+    }
+    
+    this.loading = true;
+    this.produtoService.editar(this.editarItem.id, this.editarItem).subscribe({
+      next: () => {
+        this.mostrarSucesso('Produto atualizado com sucesso');
+        this.carregarProdutos();
+        this.editarItem = null;
+      },
+      error: (e: Error) => this.tratarErro(e, 'Falha ao editar o produto.')
+    });
+  }
+
+  private resetarFormulario() {
     this.novoNome = '';
-    this.novoPreco = '';
     this.novoDescricao = '';
-    this.listar();
+    this.novoPreco = null;
+    this.novaLojaId = '';
+  }
+  
+  private tratarErro(e: Error, msgPadrao: string){
+    this.erro = e.message || msgPadrao;
+    this.loading = false;
+  }
+
+  private mostrarSucesso(msg: string) {
+    this.sucesso = msg;
     this.loading = false;
     setTimeout(() => this.sucesso = '', 3000);
   }

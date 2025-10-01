@@ -1,47 +1,90 @@
 <h2 class="mb-3">Produtos</h2>
 
-@if (loading) {<div class="alert alert-info">Carregando</div>}
+@if (loading) {<div class="alert alert-info">Carregando...</div>}
 @if (erro) {<div class="alert alert-danger">{{erro}}</div>}
-@if (sucesso) {<div class="alert alert-sucess">{{sucesso}}</div>}
+@if (sucesso) {<div class="alert alert-success">{{sucesso}}</div>}
 
-<div class="row g-2 align-items-center mb-3">
-    <div class="col-sm-6 col-md-4">
-        <input class="form-control"
-                      [(ngModel)]="novoNome"
-                      placeholder="Nome do produto" >
-    </div>
-        <div class="col-sm-6 col-md-4" type="number">
-        <input class="form-control"
-                      [(ngModel)]="novoPreco"
-                      placeholder="Preço" >
-    </div>
-        <div class="col-sm-6 col-md-4">
-        <input class="form-control"
-                      [(ngModel)]="novoDescricao"
-                      placeholder="Descrição" >
-    </div>
-    <div class="col-auto">
-        <button class="btn btn-primary" (click)="adicionar()">Adicionar</button>
-    </div>
+<div class="row g-2 align-items-center mb-3 p-3 border rounded bg-light">
+  <div class="col-sm-6 col-md-3">
+    <label class="form-label">Nome do Produto</label>
+    <input class="form-control" [(ngModel)]="novoNome" placeholder="Ex: Teclado Mecânico">
+  </div>
+  <div class="col-sm-6 col-md-2">
+    <label class="form-label">Preço</label>
+    <input class="form-control" type="number" [(ngModel)]="novoPreco" placeholder="Ex: 250.00">
+  </div>
+  <div class="col-sm-6 col-md-4">
+    <label class="form-label">Empresa</label>
+    <select class="form-select" [(ngModel)]="novaLojaId">
+      <option [ngValue]="null">Selecione uma Empresa</option>
+      @for(loja of lojas; track loja.id){
+        <option [value]="loja.id">{{loja.nome}}</option>
+      }
+    </select>
+  </div>
+  <div class="col-sm-6 col-md-3">
+     <label class="form-label">Descrição</label>
+     <input class="form-control" [(ngModel)]="novoDescricao" placeholder="(Opcional)">
+  </div>
+  <div class="col-12 text-end">
+    <button class="btn btn-primary mt-2" (click)="adicionar()">Adicionar Produto</button>
+  </div>
 </div>
 
 <ul class="list-group mb-3">
   @for (p of produtos; track p.id) {
-    <li class="list-group-item d-flex justify-content-between align-items-start">
-      <div class="ms-2 me-auto">
-        <div class="fw-bold">{{ p.nome }}</div>
-        <small>{{ p.descricao }}</small>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <span class="fw-bold">{{p.nome}}</span>
+        <small class="d-block text-muted">Loja: {{p.lojaModel?.nome || 'N/A'}} | R$ {{p.preco.toFixed(2)}}</small>
       </div>
-      <span class="badge bg-success rounded-pill me-3">R$ {{ p.preco.toFixed(2) }}</span>
-      <div class="col-auto">
-          <button class="btn btn-primary" (click)="remover()">Remover</button>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal" (click)="abrirModalEdicao(p)">
+          Editar
+        </button>
+        <button class="btn btn-sm btn-outline-danger" (click)="remover(p.id!)">
+          Remover
+        </button>
       </div>
     </li>
   }
 </ul>
 
-@if (produtos.length === 0) {
-  <div class="alert alert-info text-center">
-    Nenhum produto cadastrado
-  </div>
+@if (produtos.length === 0 && !loading) {
+  <div class="alert alert-info text-center">Nenhum produto cadastrado</div>
 }
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      @if (editarItem) {
+        <div class="modal-header">
+          <h4 class="modal-title">Editar Produto</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Nome</label>
+          <input class="form-control mb-2" [(ngModel)]="editarItem.nome">
+
+          <label class="form-label">Preço</label>
+          <input class="form-control mb-2" [(ngModel)]="editarItem.preco" type="number">
+          
+          <label class="form-label">Empresa</label>
+          <select class="form-select mb-2" [(ngModel)]="editarItem.lojaId">
+            <option [ngValue]="null">Selecione uma Empresa</option>
+            @for(loja of lojas; track loja.id){
+              <option [value]="loja.id">{{loja.nome}}</option>
+            }
+          </select>
+
+          <label class="form-label">Descrição</label>
+          <input class="form-control mb-2" [(ngModel)]="editarItem.descricao">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" (click)="salvarEdicao()" data-bs-dismiss="modal">Salvar Alterações</button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

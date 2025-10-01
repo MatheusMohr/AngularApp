@@ -1,11 +1,17 @@
-import { Routes } from '@angular/router';
-import { ProdutoComponent } from './component/produto-component/produto-component';
-import { HomeComponent } from './component/home-component/home-component';
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
 import { LojaComponent } from './component/loja-component/loja-component';
+import { ProdutoComponent } from './component/produto-component/produto-component';
 
 export const routes: Routes = [
-{path: 'loja', component: LojaComponent},
-{path: 'produtos', component: ProdutoComponent},
-{path: '', component: HomeComponent}
-
+  { path: 'lojas', component: LojaComponent },
+  { path: 'produtos', component: ProdutoComponent },
+  { path: '', redirectTo: '/lojas', pathMatch: 'full' },
+  { path: '**', redirectTo: '/lojas' } 
 ];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
