@@ -34,25 +34,26 @@ export class ProdutoComponent implements OnInit {
   sucesso = '';
   loading = false;
 
-  ngOnInit(){
-    this.carregarProdutos();
+  ngOnInit() {
     this.carregarLojas();
   }
-
-  carregarProdutos(){
+  carregarProdutos() {
     this.loading = true;
     this.produtoService.listar().subscribe({
       next: (data: ProdutoModel[]) => {
-        this.produtos = data;
+        this.produtos = data; 
         this.loading = false;
       },
       error: (e: Error) => this.tratarErro(e, 'Falha ao carregar produtos.')
     });
   }
-  
-  carregarLojas(){
+
+  carregarLojas() {
     this.lojaService.listar().subscribe({
-      next: (data: LojaModel[]) => this.lojas = data,
+      next: (data: LojaModel[]) => {
+        this.lojas = data;
+        this.carregarProdutos();
+      },
       error: (e: Error) => this.tratarErro(e, `Falha ao carregar empresas: ${e.message}`)
     });
   }
@@ -93,14 +94,12 @@ export class ProdutoComponent implements OnInit {
     });
   }
 
-  abrirModalEdicao(produto: ProdutoModel){
-    this.editarItem = { ...produto };
-    if (produto.lojaModel && produto.lojaModel.id) {
-      // Agora os tipos são compatíveis: string = string
-      this.editarItem.lojaId = produto.lojaModel.id;
+    abrirModalEdicao(produto: ProdutoModel){
+      this.editarItem = { ...produto };
+      if (produto.lojaModel && produto.lojaModel.id) {
+        this.editarItem.lojaId = produto.lojaModel.id?.toString();
+      }
     }
-  }
-
   salvarEdicao(){
     if (!this.editarItem || !this.editarItem.id || !this.editarItem.lojaId) {
       this.erro = "Dados inválidos para edição.";

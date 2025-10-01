@@ -73,7 +73,7 @@
           <select class="form-select mb-2" [(ngModel)]="editarItem.lojaId">
             <option [ngValue]="null">Selecione uma Empresa</option>
             @for(loja of lojas; track loja.id){
-              <option [value]="loja.id">{{loja.nome}}</option>
+              <option [ngValue]="loja.id">{{loja.nome}}</option>
             }
           </select>
 
